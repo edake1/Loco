@@ -38,13 +38,6 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    if (!process.env.OPENAI_API_KEY) {
-      return NextResponse.json(
-        { error: 'OpenAI API key not configured. Please add OPENAI_API_KEY to your .env.local file.' },
-        { status: 500 }
-      );
-    }
-
     // Trim and limit text
     const trimmedText = text.trim().slice(0, 1000);
 
@@ -52,6 +45,14 @@ export async function POST(request: NextRequest) {
       return NextResponse.json(
         { error: 'Text cannot be empty' },
         { status: 400 }
+      );
+    }
+
+    // Check for API key
+    if (!process.env.OPENAI_API_KEY) {
+      return NextResponse.json(
+        { error: 'OpenAI API key is not configured' },
+        { status: 500 }
       );
     }
 
