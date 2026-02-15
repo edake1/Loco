@@ -133,28 +133,36 @@ const exampleMessages = [
   "Miss you! Let's catch up soon",
 ];
 
-// Loading Skeleton Component
+// Premium Loading Skeleton
 function ResultSkeleton() {
   return (
-    <Card className="border-0 shadow-lg bg-gradient-to-br from-orange-50 to-amber-50 dark:from-gray-800 dark:to-gray-900 animate-pulse">
-      <CardHeader className="pb-2 pt-4 px-4">
-        <div className="h-6 bg-orange-200/50 dark:bg-orange-800/30 rounded w-32"></div>
-      </CardHeader>
-      <CardContent className="px-4 pb-4 space-y-4">
-        <div className="bg-white dark:bg-gray-900 rounded-xl p-4">
-          <div className="h-8 bg-orange-200/50 dark:bg-orange-800/30 rounded w-3/4 mb-2"></div>
-          <div className="h-4 bg-orange-200/30 dark:bg-orange-800/20 rounded w-1/2"></div>
+    <Card className="border-0 shadow-xl bg-gradient-to-br from-orange-50 via-amber-50 to-white dark:from-gray-800 dark:via-gray-900 dark:to-gray-900 overflow-hidden">
+      <CardHeader className="pb-3 pt-5 px-5 bg-gradient-to-r from-orange-500/5 to-amber-500/5">
+        <div className="flex items-center gap-2">
+          <div className="skeleton w-5 h-5 rounded-full"></div>
+          <div className="skeleton h-5 w-28"></div>
         </div>
-        <div className="space-y-2">
-          <div className="h-4 bg-orange-200/30 dark:bg-orange-800/20 rounded w-full"></div>
-          <div className="h-4 bg-orange-200/30 dark:bg-orange-800/20 rounded w-4/5"></div>
+      </CardHeader>
+      <CardContent className="px-5 pb-5 space-y-4">
+        <div className="bg-white dark:bg-gray-900/50 rounded-2xl p-5 shadow-sm border border-orange-100/50 dark:border-gray-700/50">
+          <div className="skeleton h-9 w-3/4 mb-3"></div>
+          <div className="skeleton h-4 w-1/2"></div>
+        </div>
+        <div className="space-y-3">
+          <div className="skeleton h-4 w-full"></div>
+          <div className="skeleton h-4 w-5/6"></div>
+        </div>
+        <div className="flex gap-2 pt-2">
+          <div className="skeleton h-8 w-16 rounded-full"></div>
+          <div className="skeleton h-8 w-16 rounded-full"></div>
+          <div className="skeleton h-8 w-16 rounded-full"></div>
         </div>
       </CardContent>
     </Card>
   );
 }
 
-// Share Card Component
+// Share Card Component - Beautiful Social Media Card
 function ShareCard({
   originalText,
   nativeText,
@@ -168,95 +176,171 @@ function ShareCard({
   explanation: string;
   onClose: () => void;
 }) {
-  const cardRef = useRef<HTMLDivElement>(null);
   const [isGenerating, setIsGenerating] = useState(false);
 
   const handleDownload = useCallback(async () => {
-    if (!cardRef.current) return;
-
     setIsGenerating(true);
     try {
-      // Create canvas from the card
       const canvas = document.createElement('canvas');
       const ctx = canvas.getContext('2d');
       if (!ctx) throw new Error('Could not get canvas context');
 
-      // Set canvas size
-      canvas.width = 600;
-      canvas.height = 500;
+      // Instagram/TikTok friendly dimensions (4:5 ratio)
+      canvas.width = 540;
+      canvas.height = 675;
 
-      // Draw gradient background
-      const gradient = ctx.createLinearGradient(0, 0, canvas.width, canvas.height);
-      gradient.addColorStop(0, '#fff7ed');
-      gradient.addColorStop(0.5, '#ffffff');
-      gradient.addColorStop(1, '#fffbeb');
-      ctx.fillStyle = gradient;
+      // Beautiful gradient background
+      const bgGradient = ctx.createLinearGradient(0, 0, canvas.width, canvas.height);
+      bgGradient.addColorStop(0, '#1a1a2e');
+      bgGradient.addColorStop(0.5, '#16213e');
+      bgGradient.addColorStop(1, '#0f0f23');
+      ctx.fillStyle = bgGradient;
       ctx.fillRect(0, 0, canvas.width, canvas.height);
 
-      // Draw border
-      ctx.strokeStyle = '#fed7aa';
-      ctx.lineWidth = 4;
-      ctx.roundRect(10, 10, canvas.width - 20, canvas.height - 20, 20);
-      ctx.stroke();
+      // Add subtle pattern overlay
+      ctx.globalAlpha = 0.03;
+      for (let i = 0; i < 20; i++) {
+        ctx.beginPath();
+        ctx.arc(
+          Math.random() * canvas.width,
+          Math.random() * canvas.height,
+          Math.random() * 50 + 10,
+          0,
+          Math.PI * 2
+        );
+        ctx.fillStyle = '#f97316';
+        ctx.fill();
+      }
+      ctx.globalAlpha = 1;
 
-      // Draw header
-      ctx.fillStyle = '#ea580c';
-      ctx.font = 'bold 28px system-ui, -apple-system, sans-serif';
-      ctx.fillText('🦁 Loco', 30, 55);
+      // Glowing orb decoration
+      const orbGradient = ctx.createRadialGradient(canvas.width - 80, 80, 0, canvas.width - 80, 80, 120);
+      orbGradient.addColorStop(0, 'rgba(249, 115, 22, 0.3)');
+      orbGradient.addColorStop(0.5, 'rgba(249, 115, 22, 0.1)');
+      orbGradient.addColorStop(1, 'rgba(249, 115, 22, 0)');
+      ctx.fillStyle = orbGradient;
+      ctx.fillRect(0, 0, canvas.width, canvas.height);
 
-      ctx.fillStyle = '#9ca3af';
-      ctx.font = '14px system-ui, -apple-system, sans-serif';
-      ctx.fillText('Sound like a local', 30, 78);
+      // Main content card background
+      ctx.fillStyle = 'rgba(255, 255, 255, 0.05)';
+      ctx.beginPath();
+      ctx.roundRect(20, 140, canvas.width - 40, canvas.height - 220, 24);
+      ctx.fill();
 
-      // Draw divider
-      ctx.strokeStyle = '#fed7aa';
+      // Card border glow
+      ctx.strokeStyle = 'rgba(249, 115, 22, 0.3)';
       ctx.lineWidth = 1;
       ctx.beginPath();
-      ctx.moveTo(30, 100);
-      ctx.lineTo(canvas.width - 30, 100);
+      ctx.roundRect(20, 140, canvas.width - 40, canvas.height - 220, 24);
       ctx.stroke();
 
-      // Draw original text
-      ctx.fillStyle = '#6b7280';
-      ctx.font = '12px system-ui, -apple-system, sans-serif';
-      ctx.fillText('ORIGINAL', 30, 130);
-
-      ctx.fillStyle = '#1f2937';
-      ctx.font = '16px system-ui, -apple-system, sans-serif';
-      const wrappedOriginal = wrapText(ctx, `"${originalText}"`, 30, 155, canvas.width - 60, 22);
-      wrappedOriginal.forEach((line, i) => {
-        ctx.fillText(line, 30, 155 + i * 22);
-      });
-
-      // Draw arrow
-      ctx.fillStyle = '#ea580c';
-      ctx.font = '24px system-ui, -apple-system, sans-serif';
-      ctx.fillText('↓', canvas.width / 2 - 10, 200 + wrappedOriginal.length * 22 + 10);
-
-      // Draw native text
-      ctx.fillStyle = '#ea580c';
-      ctx.font = '12px system-ui, -apple-system, sans-serif';
-      ctx.fillText(`NATIVE (${language.toUpperCase()})`, 30, 240 + wrappedOriginal.length * 22);
-
-      ctx.fillStyle = '#1f2937';
-      ctx.font = 'bold 26px system-ui, -apple-system, sans-serif';
-      const wrappedNative = wrapText(ctx, nativeText, 30, 275 + wrappedOriginal.length * 22, canvas.width - 60, 34);
-      wrappedNative.forEach((line, i) => {
-        ctx.fillText(line, 30, 275 + wrappedOriginal.length * 22 + i * 34);
-      });
-
-      // Draw explanation
-      ctx.fillStyle = '#6b7280';
+      // Header section with logo
+      ctx.fillStyle = '#ffffff';
+      ctx.font = 'bold 42px system-ui, -apple-system, sans-serif';
+      ctx.fillText('🌐', 30, 75);
+      
+      ctx.fillStyle = '#ffffff';
+      ctx.font = 'bold 32px system-ui, -apple-system, sans-serif';
+      ctx.fillText('Loco', 85, 72);
+      
+      ctx.fillStyle = 'rgba(255, 255, 255, 0.6)';
       ctx.font = '14px system-ui, -apple-system, sans-serif';
-      const wrappedExplanation = wrapText(ctx, `💡 ${explanation}`, 30, 355 + wrappedOriginal.length * 22 + wrappedNative.length * 10, canvas.width - 60, 20);
-      wrappedExplanation.forEach((line, i) => {
-        ctx.fillText(line, 30, 355 + wrappedOriginal.length * 22 + wrappedNative.length * 10 + i * 20);
+      ctx.fillText('Sound like a local', 85, 95);
+
+      // Language badge
+      const badgeWidth = 100;
+      const badgeX = canvas.width - badgeWidth - 30;
+      ctx.fillStyle = 'rgba(249, 115, 22, 0.2)';
+      ctx.beginPath();
+      ctx.roundRect(badgeX, 45, badgeWidth, 32, 16);
+      ctx.fill();
+      ctx.strokeStyle = 'rgba(249, 115, 22, 0.5)';
+      ctx.lineWidth = 1;
+      ctx.beginPath();
+      ctx.roundRect(badgeX, 45, badgeWidth, 32, 16);
+      ctx.stroke();
+      ctx.fillStyle = '#f97316';
+      ctx.font = 'bold 12px system-ui, -apple-system, sans-serif';
+      ctx.textAlign = 'center';
+      ctx.fillText(language.toUpperCase(), badgeX + badgeWidth / 2, 66);
+      ctx.textAlign = 'left';
+
+      // Original text section
+      ctx.fillStyle = 'rgba(255, 255, 255, 0.5)';
+      ctx.font = '11px system-ui, -apple-system, sans-serif';
+      ctx.fillText('ENGLISH', 40, 175);
+
+      ctx.fillStyle = 'rgba(255, 255, 255, 0.8)';
+      ctx.font = '15px system-ui, -apple-system, sans-serif';
+      const wrappedOriginal = wrapText(ctx, originalText, 40, 205, canvas.width - 80, 24);
+      wrappedOriginal.forEach((line, i) => {
+        ctx.fillText(line, 40, 205 + i * 24);
       });
 
-      // Draw footer
-      ctx.fillStyle = '#9ca3af';
-      ctx.font = '12px system-ui, -apple-system, sans-serif';
-      ctx.fillText('loco.app • Make your texts native', canvas.width - 230, canvas.height - 25);
+      // Decorative divider with arrow
+      const dividerY = 215 + wrappedOriginal.length * 24 + 15;
+      ctx.strokeStyle = 'rgba(249, 115, 22, 0.3)';
+      ctx.lineWidth = 1;
+      ctx.beginPath();
+      ctx.moveTo(40, dividerY);
+      ctx.lineTo(canvas.width / 2 - 30, dividerY);
+      ctx.stroke();
+      ctx.beginPath();
+      ctx.moveTo(canvas.width / 2 + 30, dividerY);
+      ctx.lineTo(canvas.width - 40, dividerY);
+      ctx.stroke();
+
+      // Arrow icon in center
+      ctx.fillStyle = '#f97316';
+      ctx.font = '20px system-ui, -apple-system, sans-serif';
+      ctx.textAlign = 'center';
+      ctx.fillText('↓', canvas.width / 2, dividerY + 8);
+      ctx.textAlign = 'left';
+
+      // Native text section (highlighted)
+      const nativeY = dividerY + 45;
+      ctx.fillStyle = '#f97316';
+      ctx.font = 'bold 11px system-ui, -apple-system, sans-serif';
+      ctx.fillText('NATIVE', 40, nativeY);
+
+      // Native text with glow effect
+      ctx.shadowColor = 'rgba(249, 115, 22, 0.5)';
+      ctx.shadowBlur = 20;
+      ctx.fillStyle = '#ffffff';
+      ctx.font = 'bold 26px system-ui, -apple-system, sans-serif';
+      const wrappedNative = wrapText(ctx, nativeText, 40, nativeY + 35, canvas.width - 80, 34);
+      // Show all lines of native text (up to 4 lines for design)
+      const maxNativeLines = Math.min(wrappedNative.length, 4);
+      for (let i = 0; i < maxNativeLines; i++) {
+        ctx.fillText(wrappedNative[i], 40, nativeY + 35 + i * 34);
+      }
+      ctx.shadowBlur = 0;
+
+      // Explanation section - show full text, up to 4 lines
+      const explanationY = nativeY + 35 + maxNativeLines * 34 + 20;
+      ctx.font = '13px system-ui, -apple-system, sans-serif';
+      const wrappedExplanation = wrapText(ctx, `💡 ${explanation}`, 40, explanationY, canvas.width - 80, 18);
+      const maxExplanationLines = Math.min(wrappedExplanation.length, 4);
+      
+      // Dynamic background based on lines needed
+      const explanationBoxHeight = Math.max(40, maxExplanationLines * 18 + 16);
+      ctx.fillStyle = 'rgba(255, 255, 255, 0.08)';
+      ctx.beginPath();
+      ctx.roundRect(35, explanationY - 12, canvas.width - 70, explanationBoxHeight, 12);
+      ctx.fill();
+      
+      // Draw explanation text (must set fillStyle AFTER drawing background!)
+      ctx.fillStyle = 'rgba(255, 255, 255, 0.8)';
+      for (let i = 0; i < maxExplanationLines; i++) {
+        ctx.fillText(wrappedExplanation[i], 45, explanationY + 5 + i * 18);
+      }
+
+      // Footer
+      ctx.fillStyle = 'rgba(255, 255, 255, 0.3)';
+      ctx.font = 'italic 12px system-ui, -apple-system, sans-serif';
+      ctx.textAlign = 'center';
+      ctx.fillText('"Every word builds a bridge"', canvas.width / 2, canvas.height - 30);
+      ctx.textAlign = 'left';
 
       // Download
       const link = document.createElement('a');
@@ -287,73 +371,75 @@ function ShareCard({
       }
     }
     if (currentLine) lines.push(currentLine);
-    return lines.slice(0, 3); // Max 3 lines
+    return lines;
   }
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm animate-in fade-in duration-200">
-      <div className="bg-white dark:bg-gray-900 rounded-2xl shadow-2xl max-w-md w-full mx-4 overflow-hidden animate-in zoom-in-95 duration-200">
-        <div className="p-6">
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm animate-in fade-in duration-200">
+      <div className="bg-white dark:bg-gray-900 rounded-2xl shadow-2xl max-w-sm w-full mx-4 overflow-hidden animate-in zoom-in-95 duration-200">
+        <div className="p-5">
           <div className="flex items-center justify-between mb-4">
-            <h3 className="text-lg font-semibold text-gray-900 dark:text-white">Share Your Translation</h3>
-            <Button variant="ghost" size="icon" onClick={onClose} className="text-gray-400">
-              <X className="w-5 h-5" />
+            <h3 className="text-lg font-semibold text-gray-900 dark:text-white">Share Card</h3>
+            <Button variant="ghost" size="icon" onClick={onClose} className="text-gray-400 h-8 w-8">
+              <X className="w-4 h-4" />
             </Button>
           </div>
 
-          {/* Preview Card */}
-          <div
-            ref={cardRef}
-            className="bg-gradient-to-br from-orange-50 via-white to-amber-50 rounded-xl p-5 border-2 border-orange-200 mb-4"
-          >
-            <div className="flex items-center gap-2 mb-3">
-              <span className="text-2xl">🦁</span>
+          {/* Preview Card - Dark theme matching the canvas */}
+          <div className="bg-gradient-to-br from-gray-900 via-gray-800 to-gray-900 rounded-xl p-4 mb-4 border border-orange-500/20">
+            <div className="flex items-center justify-between mb-3">
+              <div className="flex items-center gap-2">
+                <span className="text-xl">🌐</span>
+                <div>
+                  <p className="font-bold text-white text-sm">Loco</p>
+                  <p className="text-xs text-gray-400">Sound like a local</p>
+                </div>
+              </div>
+              <span className="text-xs bg-orange-500/20 text-orange-400 px-2 py-1 rounded-full border border-orange-500/30">
+                {language}
+              </span>
+            </div>
+
+            <div className="space-y-2">
               <div>
-                <p className="font-bold text-orange-600">Loco</p>
-                <p className="text-xs text-gray-400">Sound like a local</p>
+                <p className="text-[10px] text-gray-500 uppercase tracking-wide">English</p>
+                <p className="text-xs text-gray-300">{originalText.slice(0, 50)}{originalText.length > 50 ? '...' : ''}</p>
+              </div>
+
+              <div className="flex items-center gap-2 py-1">
+                <div className="flex-1 h-px bg-orange-500/20" />
+                <span className="text-orange-500 text-sm">↓</span>
+                <div className="flex-1 h-px bg-orange-500/20" />
+              </div>
+
+              <div>
+                <p className="text-[10px] text-orange-500 uppercase tracking-wide">Native</p>
+                <p className="text-base font-bold text-white">{nativeText}</p>
+              </div>
+
+              <div className="bg-white/5 rounded-lg p-2 mt-2">
+                <p className="text-[10px] text-gray-400">💡 {explanation.slice(0, 60)}{explanation.length > 60 ? '...' : ''}</p>
               </div>
             </div>
 
-            <div className="space-y-3">
-              <div>
-                <p className="text-xs text-gray-400 uppercase tracking-wide mb-1">Original</p>
-                <p className="text-sm text-gray-700 dark:text-gray-300">&quot;{originalText.slice(0, 60)}{originalText.length > 60 ? '...' : ''}&quot;</p>
-              </div>
-
-              <div className="text-center text-orange-500 text-xl">↓</div>
-
-              <div>
-                <p className="text-xs text-orange-500 uppercase tracking-wide mb-1">Native ({language})</p>
-                <p className="text-xl font-semibold text-gray-900 dark:text-white">{nativeText}</p>
-              </div>
-
-              <p className="text-xs text-gray-500 pt-2 border-t border-orange-100">
-                💡 {explanation.slice(0, 80)}{explanation.length > 80 ? '...' : ''}
-              </p>
-            </div>
-
-            <p className="text-xs text-gray-400 text-center mt-4">
-              loco.app • Make your texts native
-            </p>
+            <p className="text-[10px] text-gray-500 text-center mt-3 italic">"Every word builds a bridge"</p>
           </div>
 
           <div className="flex gap-2">
             <Button
               onClick={handleDownload}
               disabled={isGenerating}
-              className="flex-1 bg-gradient-to-r from-orange-500 to-amber-500 text-white"
+              className="flex-1 bg-gradient-to-r from-orange-500 to-amber-500 text-white h-11"
             >
               {isGenerating ? (
                 <Loader2 className="w-4 h-4 mr-2 animate-spin" />
               ) : (
                 <Download className="w-4 h-4 mr-2" />
               )}
-              Download Image
-            </Button>
-            <Button variant="outline" onClick={onClose} className="flex-1">
-              Cancel
+              Download PNG
             </Button>
           </div>
+          <p className="text-xs text-gray-400 text-center mt-3">Perfect for TikTok, Instagram & more</p>
         </div>
       </div>
     </div>
@@ -558,27 +644,222 @@ export default function Home() {
     });
   };
 
-  // Share transformation
+  // Share transformation - shares the image card
   const handleShare = async () => {
     if (!result) return;
 
-    const shareText = `🦁 Loco Translation\n\nOriginal: "${inputText}"\n\n${selectedLanguage.flag} Native: "${result.nativeText}"\n\n💡 ${result.explanation}`;
+    try {
+      // Generate the image
+      const canvas = document.createElement('canvas');
+      const ctx = canvas.getContext('2d');
+      if (!ctx) throw new Error('Could not get canvas context');
 
-    if (navigator.share) {
-      try {
+      // Instagram/TikTok friendly dimensions (4:5 ratio)
+      canvas.width = 540;
+      canvas.height = 675;
+
+      // Beautiful gradient background
+      const bgGradient = ctx.createLinearGradient(0, 0, canvas.width, canvas.height);
+      bgGradient.addColorStop(0, '#1a1a2e');
+      bgGradient.addColorStop(0.5, '#16213e');
+      bgGradient.addColorStop(1, '#0f0f23');
+      ctx.fillStyle = bgGradient;
+      ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+      // Add subtle pattern overlay
+      ctx.globalAlpha = 0.03;
+      for (let i = 0; i < 20; i++) {
+        ctx.beginPath();
+        ctx.arc(
+          Math.random() * canvas.width,
+          Math.random() * canvas.height,
+          Math.random() * 50 + 10,
+          0,
+          Math.PI * 2
+        );
+        ctx.fillStyle = '#f97316';
+        ctx.fill();
+      }
+      ctx.globalAlpha = 1;
+
+      // Glowing orb decoration
+      const orbGradient = ctx.createRadialGradient(canvas.width - 80, 80, 0, canvas.width - 80, 80, 120);
+      orbGradient.addColorStop(0, 'rgba(249, 115, 22, 0.3)');
+      orbGradient.addColorStop(0.5, 'rgba(249, 115, 22, 0.1)');
+      orbGradient.addColorStop(1, 'rgba(249, 115, 22, 0)');
+      ctx.fillStyle = orbGradient;
+      ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+      // Main content card background
+      ctx.fillStyle = 'rgba(255, 255, 255, 0.05)';
+      ctx.beginPath();
+      ctx.roundRect(20, 140, canvas.width - 40, canvas.height - 220, 24);
+      ctx.fill();
+
+      // Card border glow
+      ctx.strokeStyle = 'rgba(249, 115, 22, 0.3)';
+      ctx.lineWidth = 1;
+      ctx.beginPath();
+      ctx.roundRect(20, 140, canvas.width - 40, canvas.height - 220, 24);
+      ctx.stroke();
+
+      // Header section with logo
+      ctx.fillStyle = '#ffffff';
+      ctx.font = 'bold 42px system-ui, -apple-system, sans-serif';
+      ctx.fillText('🌐', 30, 75);
+      
+      ctx.fillStyle = '#ffffff';
+      ctx.font = 'bold 32px system-ui, -apple-system, sans-serif';
+      ctx.fillText('Loco', 85, 72);
+      
+      ctx.fillStyle = 'rgba(255, 255, 255, 0.6)';
+      ctx.font = '14px system-ui, -apple-system, sans-serif';
+      ctx.fillText('Sound like a local', 85, 95);
+
+      // Language badge
+      const badgeWidth = 100;
+      const badgeX = canvas.width - badgeWidth - 30;
+      ctx.fillStyle = 'rgba(249, 115, 22, 0.2)';
+      ctx.beginPath();
+      ctx.roundRect(badgeX, 45, badgeWidth, 32, 16);
+      ctx.fill();
+      ctx.strokeStyle = 'rgba(249, 115, 22, 0.5)';
+      ctx.lineWidth = 1;
+      ctx.beginPath();
+      ctx.roundRect(badgeX, 45, badgeWidth, 32, 16);
+      ctx.stroke();
+      ctx.fillStyle = '#f97316';
+      ctx.font = 'bold 12px system-ui, -apple-system, sans-serif';
+      ctx.textAlign = 'center';
+      ctx.fillText(selectedLanguage.name.toUpperCase(), badgeX + badgeWidth / 2, 66);
+      ctx.textAlign = 'left';
+
+      // Helper to wrap text
+      const wrapTextHelper = (ctx: CanvasRenderingContext2D, text: string, x: number, y: number, maxWidth: number, lineHeight: number): string[] => {
+        const words = text.split(' ');
+        const lines: string[] = [];
+        let currentLine = '';
+
+        for (const word of words) {
+          const testLine = currentLine + (currentLine ? ' ' : '') + word;
+          const metrics = ctx.measureText(testLine);
+          if (metrics.width > maxWidth && currentLine) {
+            lines.push(currentLine);
+            currentLine = word;
+          } else {
+            currentLine = testLine;
+          }
+        }
+        if (currentLine) lines.push(currentLine);
+        return lines;
+      };
+
+      // Original text section
+      ctx.fillStyle = 'rgba(255, 255, 255, 0.5)';
+      ctx.font = '11px system-ui, -apple-system, sans-serif';
+      ctx.fillText('ENGLISH', 40, 175);
+
+      ctx.fillStyle = 'rgba(255, 255, 255, 0.8)';
+      ctx.font = '15px system-ui, -apple-system, sans-serif';
+      const wrappedOriginal = wrapTextHelper(ctx, inputText, 40, 205, canvas.width - 80, 24);
+      wrappedOriginal.forEach((line, i) => {
+        ctx.fillText(line, 40, 205 + i * 24);
+      });
+
+      // Decorative divider with arrow
+      const dividerY = 215 + wrappedOriginal.length * 24 + 15;
+      ctx.strokeStyle = 'rgba(249, 115, 22, 0.3)';
+      ctx.lineWidth = 1;
+      ctx.beginPath();
+      ctx.moveTo(40, dividerY);
+      ctx.lineTo(canvas.width / 2 - 30, dividerY);
+      ctx.stroke();
+      ctx.beginPath();
+      ctx.moveTo(canvas.width / 2 + 30, dividerY);
+      ctx.lineTo(canvas.width - 40, dividerY);
+      ctx.stroke();
+
+      // Arrow icon in center
+      ctx.fillStyle = '#f97316';
+      ctx.font = '20px system-ui, -apple-system, sans-serif';
+      ctx.textAlign = 'center';
+      ctx.fillText('↓', canvas.width / 2, dividerY + 8);
+      ctx.textAlign = 'left';
+
+      // Native text section (highlighted)
+      const nativeY = dividerY + 45;
+      ctx.fillStyle = '#f97316';
+      ctx.font = 'bold 11px system-ui, -apple-system, sans-serif';
+      ctx.fillText('NATIVE', 40, nativeY);
+
+      // Native text with glow effect
+      ctx.shadowColor = 'rgba(249, 115, 22, 0.5)';
+      ctx.shadowBlur = 20;
+      ctx.fillStyle = '#ffffff';
+      ctx.font = 'bold 26px system-ui, -apple-system, sans-serif';
+      const wrappedNative = wrapTextHelper(ctx, result.nativeText, 40, nativeY + 35, canvas.width - 80, 34);
+      const maxNativeLines = Math.min(wrappedNative.length, 4);
+      for (let i = 0; i < maxNativeLines; i++) {
+        ctx.fillText(wrappedNative[i], 40, nativeY + 35 + i * 34);
+      }
+      ctx.shadowBlur = 0;
+
+      // Explanation section - show full text, up to 4 lines
+      const explanationY = nativeY + 35 + maxNativeLines * 34 + 20;
+      ctx.font = '13px system-ui, -apple-system, sans-serif';
+      const wrappedExplanation = wrapTextHelper(ctx, `💡 ${result.explanation}`, 40, explanationY, canvas.width - 80, 18);
+      const maxExplanationLines = Math.min(wrappedExplanation.length, 4);
+      
+      // Dynamic background based on lines needed
+      const explanationBoxHeight = Math.max(40, maxExplanationLines * 18 + 16);
+      ctx.fillStyle = 'rgba(255, 255, 255, 0.08)';
+      ctx.beginPath();
+      ctx.roundRect(35, explanationY - 12, canvas.width - 70, explanationBoxHeight, 12);
+      ctx.fill();
+      
+      // Draw explanation text (must set fillStyle AFTER drawing background!)
+      ctx.fillStyle = 'rgba(255, 255, 255, 0.8)';
+      for (let i = 0; i < maxExplanationLines; i++) {
+        ctx.fillText(wrappedExplanation[i], 45, explanationY + 5 + i * 18);
+      }
+
+      // Footer
+      ctx.fillStyle = 'rgba(255, 255, 255, 0.3)';
+      ctx.font = 'italic 12px system-ui, -apple-system, sans-serif';
+      ctx.textAlign = 'center';
+      ctx.fillText('"Every word builds a bridge"', canvas.width / 2, canvas.height - 30);
+      ctx.textAlign = 'left';
+
+      // Convert to blob and share
+      const blob = await new Promise<Blob>((resolve, reject) => {
+        canvas.toBlob((blob) => {
+          if (blob) resolve(blob);
+          else reject(new Error('Failed to create blob'));
+        }, 'image/png');
+      });
+
+      const file = new File([blob], 'loco-translation.png', { type: 'image/png' });
+
+      if (navigator.share && navigator.canShare({ files: [file] })) {
         await navigator.share({
           title: 'Loco Translation',
-          text: shareText,
+          files: [file],
         });
-      } catch {
-        // User cancelled or error
+      } else {
+        // Fallback: download the image
+        const link = document.createElement('a');
+        link.href = URL.createObjectURL(blob);
+        link.download = 'loco-translation.png';
+        link.click();
+        URL.revokeObjectURL(link.href);
+        toast({
+          title: 'Downloaded!',
+          description: 'Image saved. Share it anywhere!',
+        });
       }
-    } else {
-      await handleCopy(shareText);
-      toast({
-        title: 'Copied for sharing!',
-        description: 'Share text copied to clipboard',
-      });
+    } catch (err) {
+      // User cancelled or error - silently handle
+      console.log('Share cancelled or failed:', err);
     }
   };
 
@@ -622,6 +903,32 @@ export default function Home() {
     });
   };
 
+  // Export history as text
+  const exportHistoryAsText = () => {
+    if (history.length === 0) return;
+
+    const textContent = history.map((item, index) => {
+      return `${index + 1}. [${item.targetLanguage}] ${item.mode === 'send' ? 'Sent' : 'Received'}
+Original: "${item.originalText}"
+Native: "${item.result.nativeText}"
+${item.result.explanation ? `Note: ${item.result.explanation}` : ''}
+---`;
+    }).join('\n\n');
+
+    const blob = new Blob([textContent], { type: 'text/plain' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = `loco-history-${new Date().toISOString().split('T')[0]}.txt`;
+    link.click();
+    URL.revokeObjectURL(url);
+
+    toast({
+      title: 'Exported!',
+      description: `Downloaded ${history.length} translations as text`,
+    });
+  };
+
   const bookmarkedItems = history.filter((item) => item.isBookmarked);
   const charCount = inputText.length;
   const isOverLimit = charCount > MAX_CHARS;
@@ -629,29 +936,29 @@ export default function Home() {
   return (
     <div className="min-h-screen bg-gradient-to-br from-orange-50 via-white to-amber-50 dark:from-gray-950 dark:via-gray-900 dark:to-gray-950">
       {/* Header */}
-      <header className="sticky top-0 z-50 backdrop-blur-xl bg-white/80 dark:bg-gray-900/80 border-b border-orange-100/50 dark:border-gray-800/50 shadow-sm">
+      <header className="sticky top-0 z-50 backdrop-blur-xl bg-white/90 dark:bg-gray-900/90 border-b border-orange-100/30 dark:border-gray-800/30 shadow-sm">
         <div className="max-w-4xl mx-auto px-4 py-3">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-3">
-              <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-orange-400 via-amber-400 to-orange-500 flex items-center justify-center text-white font-bold text-xl shadow-lg shadow-orange-300/40 dark:shadow-orange-900/30 ring-2 ring-white dark:ring-gray-800">
+              <div className="w-11 h-11 rounded-2xl bg-gradient-to-br from-orange-400 via-amber-400 to-orange-500 flex items-center justify-center text-white font-bold text-xl shadow-xl shadow-orange-300/30 dark:shadow-orange-900/30 ring-2 ring-white dark:ring-gray-800 animate-float">
                 L
               </div>
               <div>
                 <h1 className="text-xl font-bold bg-gradient-to-r from-orange-600 to-amber-600 bg-clip-text text-transparent">
                   Loco
                 </h1>
-                <p className="text-xs text-gray-500 dark:text-gray-400 -mt-0.5">
+                <p className="text-[11px] text-gray-500 dark:text-gray-400 -mt-0.5 tracking-wide">
                   Sound like a local
                 </p>
               </div>
             </div>
 
-            <div className="flex items-center gap-2">
+            <div className="flex items-center gap-1.5">
               <Button
                 variant="ghost"
                 size="icon"
                 onClick={toggleDarkMode}
-                className="text-gray-600 dark:text-gray-300 hover:bg-orange-100 dark:hover:bg-orange-900/30"
+                className="text-gray-600 dark:text-gray-300 hover:bg-orange-100 dark:hover:bg-orange-900/30 rounded-full btn-press"
                 title={isDark ? 'Switch to light mode' : 'Switch to dark mode'}
               >
                 {isDark ? <Sun className="w-4 h-4" /> : <Moon className="w-4 h-4" />}
@@ -673,40 +980,60 @@ export default function Home() {
                     )}
                   </Button>
                 </SheetTrigger>
-                <SheetContent className="w-[400px] sm:w-[450px] p-0 flex flex-col">
-                  <SheetHeader className="p-4 border-b border-gray-100 dark:border-gray-800">
-                    <div className="flex items-center justify-between">
-                      <SheetTitle className="text-lg">History & Bookmarks</SheetTitle>
+                <SheetContent className="w-[85vw] sm:w-[400px] sm:max-w-[450px] p-0 flex flex-col">
+                  {/* Premium Header */}
+                  <div className="px-5 pt-5 pb-3 bg-gradient-to-b from-orange-50/80 to-transparent dark:from-gray-800/50 dark:to-transparent">
+                    <div className="flex items-start justify-between mb-1">
+                      <div>
+                        <SheetTitle className="text-lg font-semibold text-gray-900 dark:text-white">History</SheetTitle>
+                        <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">
+                          {history.length} translation{history.length !== 1 ? 's' : ''} • {bookmarkedItems.length} saved
+                        </p>
+                      </div>
                       {history.length > 0 && (
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          onClick={clearHistory}
-                          className="text-red-500 hover:text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20"
-                        >
-                          <Trash2 className="w-4 h-4 mr-1" />
-                          Clear
-                        </Button>
+                        <div className="flex items-center gap-1">
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={exportHistoryAsText}
+                            className="h-8 text-xs border-gray-200 dark:border-gray-700 text-gray-600 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800"
+                          >
+                            <Download className="w-3 h-3 mr-1.5" />
+                            Export
+                          </Button>
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={clearHistory}
+                            className="h-8 text-xs border-red-200 dark:border-red-900/50 text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20"
+                          >
+                            <Trash2 className="w-3 h-3 mr-1.5" />
+                            Clear
+                          </Button>
+                        </div>
                       )}
                     </div>
+                  </div>
+                  <SheetHeader className="sr-only">
+                    <SheetTitle>History & Bookmarks</SheetTitle>
                   </SheetHeader>
                   <div className="flex-1 overflow-hidden">
                     <Tabs defaultValue="all" className="h-full flex flex-col">
-                      <div className="px-4 pt-4">
-                        <TabsList className="grid w-full grid-cols-2 bg-gray-100 dark:bg-gray-800">
-                          <TabsTrigger value="all" className="data-[state=active]:bg-white dark:data-[state=active]:bg-gray-900">
-                            All ({history.length})
+                      <div className="px-5 pb-2">
+                        <TabsList className="grid w-full grid-cols-2 h-9 bg-gray-100/80 dark:bg-gray-800/80">
+                          <TabsTrigger value="all" className="text-xs data-[state=active]:bg-white dark:data-[state=active]:bg-gray-900 data-[state=active]:shadow-sm">
+                            All
                           </TabsTrigger>
-                          <TabsTrigger value="bookmarks" className="data-[state=active]:bg-white dark:data-[state=active]:bg-gray-900">
+                          <TabsTrigger value="bookmarks" className="text-xs data-[state=active]:bg-white dark:data-[state=active]:bg-gray-900 data-[state=active]:shadow-sm">
                             <Bookmark className="w-3 h-3 mr-1" />
-                            Saved ({bookmarkedItems.length})
+                            Saved
                           </TabsTrigger>
                         </TabsList>
                       </div>
 
                       <TabsContent value="all" className="flex-1 overflow-hidden mt-0">
-                        <ScrollArea className="h-[calc(100vh-200px)]">
-                          <div className="p-4 pt-2">
+                        <ScrollArea className="h-[calc(100vh-220px)]">
+                          <div className="px-5 pb-5">
                             {history.length === 0 ? (
                               <div className="text-center py-8 text-gray-500 dark:text-gray-400">
                                 <History className="w-10 h-10 mx-auto mb-3 opacity-30" />
@@ -787,8 +1114,8 @@ export default function Home() {
                       </TabsContent>
 
                       <TabsContent value="bookmarks" className="flex-1 overflow-hidden mt-0">
-                        <ScrollArea className="h-[calc(100vh-200px)]">
-                          <div className="p-4 pt-2">
+                        <ScrollArea className="h-[calc(100vh-220px)]">
+                          <div className="px-5 pb-5">
                             {bookmarkedItems.length === 0 ? (
                               <div className="text-center py-8 text-gray-500 dark:text-gray-400">
                                 <Bookmark className="w-10 h-10 mx-auto mb-3 opacity-30" />
@@ -918,7 +1245,7 @@ export default function Home() {
               Context
             </p>
             <div className="flex flex-wrap gap-1">
-              {contexts.slice(0, 3).map((ctx) => (
+              {contexts.map((ctx) => (
                 <Button
                   key={ctx.code}
                   variant={selectedContext.code === ctx.code ? 'default' : 'outline'}
@@ -933,22 +1260,6 @@ export default function Home() {
                   <span className="truncate">{ctx.emoji} <span className="hidden sm:inline">{ctx.label}</span></span>
                 </Button>
               ))}
-              {contexts.length > 3 && (
-                <select
-                  value={selectedContext.code}
-                  onChange={(e) => {
-                    const ctx = contexts.find((c) => c.code === e.target.value);
-                    if (ctx) setSelectedContext(ctx);
-                  }}
-                  className="bg-gray-50 dark:bg-gray-800 border-0 rounded-lg px-2 py-1 text-xs focus:outline-none cursor-pointer"
-                >
-                  {contexts.slice(3).map((ctx) => (
-                    <option key={ctx.code} value={ctx.code}>
-                      {ctx.emoji} {ctx.label}
-                    </option>
-                  ))}
-                </select>
-              )}
             </div>
           </div>
 
@@ -983,37 +1294,21 @@ export default function Home() {
               Vibe
             </p>
             <div className="flex flex-wrap gap-1">
-              {vibes.slice(0, 3).map((vibe) => (
+              {vibes.map((vibe) => (
                 <Button
                   key={vibe.code}
                   variant={selectedVibe.code === vibe.code ? 'default' : 'outline'}
                   size="sm"
                   onClick={() => setSelectedVibe(vibe)}
-                  className={`text-xs px-2 py-1 h-auto min-w-0 ${
+                  className={`text-xs px-2 py-1 h-auto ${
                     selectedVibe.code === vibe.code
                       ? 'bg-gradient-to-r from-orange-500 to-amber-500 text-white border-0'
                       : 'border-gray-200 dark:border-gray-700'
                   }`}
                 >
-                  <span className="truncate">{vibe.emoji}</span>
+                  <span className="truncate">{vibe.emoji} {vibe.label}</span>
                 </Button>
               ))}
-              {vibes.length > 3 && (
-                <select
-                  value={selectedVibe.code}
-                  onChange={(e) => {
-                    const vibe = vibes.find((v) => v.code === e.target.value);
-                    if (vibe) setSelectedVibe(vibe);
-                  }}
-                  className="bg-gray-50 dark:bg-gray-800 border-0 rounded-lg px-2 py-1 text-xs focus:outline-none cursor-pointer"
-                >
-                  {vibes.slice(3).map((vibe) => (
-                    <option key={vibe.code} value={vibe.code}>
-                      {vibe.emoji} {vibe.label}
-                    </option>
-                  ))}
-                </select>
-              )}
             </div>
           </div>
         </div>
@@ -1089,7 +1384,7 @@ export default function Home() {
             <Button
               onClick={handleTransform}
               disabled={isLoading || !inputText.trim() || isOverLimit}
-              className="w-full bg-gradient-to-r from-orange-500 via-amber-500 to-orange-500 hover:from-orange-600 hover:via-amber-600 hover:to-orange-600 text-white h-12 text-base font-medium shadow-lg shadow-orange-300/30 dark:shadow-orange-900/30 rounded-xl transition-all disabled:opacity-50 disabled:shadow-none"
+              className="w-full bg-gradient-to-r from-orange-500 via-amber-500 to-orange-500 hover:from-orange-600 hover:via-amber-600 hover:to-orange-600 text-white h-12 text-base font-semibold shadow-lg shadow-orange-300/40 dark:shadow-orange-900/40 rounded-xl transition-all disabled:opacity-50 disabled:shadow-none animate-gradient btn-press"
             >
               {isLoading ? (
                 <>
@@ -1098,7 +1393,7 @@ export default function Home() {
                 </>
               ) : (
                 <>
-                  <Sparkles className="w-5 h-5 mr-2" />
+                  <Sparkles className="w-5 h-5 mr-2 animate-sparkle" />
                   {mode === 'send' ? 'Make It Native' : 'Explain It'}
                 </>
               )}
@@ -1114,20 +1409,22 @@ export default function Home() {
         )}
 
         {result && !isLoading && !error && (
-          <div ref={resultRef} className="animate-in slide-in-from-bottom-4 duration-300">
-            <Card className="border-0 shadow-xl bg-gradient-to-br from-orange-50 via-amber-50 to-white dark:from-gray-800 dark:via-gray-900 dark:to-gray-900 overflow-hidden">
-              <CardHeader className="pb-2 pt-4 px-4 bg-gradient-to-r from-orange-500/10 to-amber-500/10 dark:from-orange-500/5 dark:to-amber-500/5">
+          <div ref={resultRef} className="animate-fade-in-up">
+            <Card className="border-0 shadow-2xl bg-gradient-to-br from-orange-50 via-amber-50 to-white dark:from-gray-800 dark:via-gray-900 dark:to-gray-900 overflow-hidden shadow-premium-lg">
+              <CardHeader className="pb-3 pt-5 px-5 bg-gradient-to-r from-orange-500/10 to-amber-500/10 dark:from-orange-500/5 dark:to-amber-500/5">
                 <div className="flex items-center justify-between">
                   <CardTitle className="text-lg flex items-center gap-2 text-orange-700 dark:text-orange-300">
-                    <CheckCircle2 className="w-5 h-5" />
+                    <span className="animate-success-pop inline-flex">
+                      <CheckCircle2 className="w-5 h-5" />
+                    </span>
                     {mode === 'send' ? 'Native Version' : 'What It Means'}
                   </CardTitle>
-                  <div className="flex items-center gap-1">
+                  <div className="flex items-center gap-0.5">
                     <Button
                       variant="ghost"
                       size="sm"
                       onClick={() => setShowShareCard(true)}
-                      className="text-orange-600 dark:text-orange-400"
+                      className="text-orange-600 dark:text-orange-400 hover:bg-orange-100 dark:hover:bg-orange-900/30 btn-press"
                       title="Generate share card"
                     >
                       <Download className="w-4 h-4" />
@@ -1136,33 +1433,44 @@ export default function Home() {
                       variant="ghost"
                       size="sm"
                       onClick={handleShare}
-                      className="text-orange-600 dark:text-orange-400"
+                      className="text-orange-600 dark:text-orange-400 hover:bg-orange-100 dark:hover:bg-orange-900/30 btn-press"
                       title="Share"
                     >
                       <Share2 className="w-4 h-4" />
                     </Button>
                     {result.nativeText && (
                       <Button
-                        variant="ghost"
+                        variant={copied ? "default" : "ghost"}
                         size="sm"
                         onClick={() => handleCopy(result.nativeText)}
-                        className="text-orange-600 dark:text-orange-400"
+                        className={`btn-press transition-all duration-200 ${
+                          copied 
+                            ? 'bg-green-500 hover:bg-green-600 text-white px-3' 
+                            : 'text-orange-600 dark:text-orange-400 hover:bg-orange-100 dark:hover:bg-orange-900/30'
+                        }`}
                       >
-                        {copied ? <Check className="w-4 h-4" /> : <Copy className="w-4 h-4" />}
+                        {copied ? (
+                          <span className="flex items-center gap-1.5 animate-in fade-in slide-in-from-right-1 duration-200">
+                            <Check className="w-4 h-4" />
+                            <span className="text-xs font-medium">Copied!</span>
+                          </span>
+                        ) : (
+                          <Copy className="w-4 h-4" />
+                        )}
                       </Button>
                     )}
                   </div>
                 </div>
               </CardHeader>
-              <CardContent className="px-4 pb-4 space-y-4">
+              <CardContent className="px-5 pb-5 space-y-4">
                 {/* Native Text */}
                 {result.nativeText && (
-                  <div className="bg-white dark:bg-gray-900 rounded-xl p-4 shadow-sm border border-orange-100 dark:border-gray-700">
+                  <div className="bg-white dark:bg-gray-900/80 rounded-2xl p-5 shadow-sm border border-orange-100/50 dark:border-gray-700/50 card-hover">
                     <p className="text-2xl sm:text-3xl font-medium text-gray-900 dark:text-white leading-relaxed">
                       {result.nativeText}
                     </p>
                     {result.transliteration && (
-                      <p className="text-sm text-gray-500 dark:text-gray-400 mt-2 italic">
+                      <p className="text-sm text-gray-500 dark:text-gray-400 mt-3 italic">
                         {result.transliteration}
                       </p>
                     )}
@@ -1171,18 +1479,18 @@ export default function Home() {
 
                 {/* Emoji Suggestions */}
                 {result.emojiSuggestions && result.emojiSuggestions.length > 0 && (
-                  <div className="flex items-center gap-2 flex-wrap">
-                    <span className="text-sm text-gray-500 dark:text-gray-400">
+                  <div className="flex items-center gap-2 flex-wrap animate-fade-in" style={{ animationDelay: '100ms' }}>
+                    <span className="text-sm text-gray-500 dark:text-gray-400 font-medium">
                       Add some flavor:
                     </span>
-                    <div className="flex gap-1">
+                    <div className="flex gap-1.5">
                       {result.emojiSuggestions.map((emoji, i) => (
                         <Button
                           key={i}
                           variant="ghost"
                           size="sm"
                           onClick={() => handleCopy(emoji)}
-                          className="text-2xl h-auto py-1 px-2 hover:bg-orange-100 dark:hover:bg-orange-900/30"
+                          className="text-2xl h-auto py-1.5 px-3 hover:bg-orange-100 dark:hover:bg-orange-900/30 rounded-full btn-press"
                         >
                           {emoji}
                         </Button>
@@ -1192,7 +1500,7 @@ export default function Home() {
                 )}
 
                 {/* Explanation */}
-                <div className="bg-white/70 dark:bg-gray-800/50 rounded-xl p-4 border border-orange-100/50 dark:border-gray-700/50">
+                <div className="bg-white/80 dark:bg-gray-800/50 rounded-xl p-4 border border-orange-100/50 dark:border-gray-700/50 animate-fade-in" style={{ animationDelay: '150ms' }}>
                   <p className="text-sm text-gray-700 dark:text-gray-300 leading-relaxed">
                     💡 {result.explanation}
                   </p>
@@ -1225,8 +1533,8 @@ export default function Home() {
 
       {/* Footer */}
       <footer className="max-w-4xl mx-auto px-4 py-8 text-center">
-        <p className="text-sm text-gray-400 dark:text-gray-500">
-          Made with 🧡 by Loco • Connect deeper with friends
+        <p className="text-sm text-gray-400 dark:text-gray-500 italic">
+          "Every word builds a bridge" 🌉
         </p>
       </footer>
     </div>

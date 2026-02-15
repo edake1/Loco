@@ -1,6 +1,51 @@
 import { NextRequest, NextResponse } from 'next/server';
 import OpenAI from 'openai';
 
+// ============================================
+// RATE LIMITING CONFIGURATION
+// ============================================
+const RATE_LIMIT_WINDOW = 60 * 60 * 1000; // 1 hour in milliseconds
+const MAX_REQUESTS_PER_WINDOW = 20; // 20 translations per hour per IP
+
+// In-memory store for rate limiting (resets on server restart)
+// For production, consider using Redis/Upstash
+const rateLimitStore = new Map<string, { count: number; resetTime: number }>();
+
+function getRateLimitKey(request: NextRequest): string {
+  // Try to get real IP from various headers (handles proxies/CDNs)
+  const forwarded = request.headers.get('x-forwarded-for');
+  const realIp = request.headers.get('x-real-ip');
+  const cfConnectingIp = request.headers.get('cf-connecting-ip'); // Cloudflare
+  
+  const ip = forwarded?.split(',')[0] || realIp || cfConnectingIp || 'unknown';
+  return `rate_limit:${ip}`;
+}
+
+function checkRateLimit(key: string): { allowed: boolean; remaining: number; resetTime: number } {
+  const now = Date.now();
+  const record = rateLimitStore.get(key);
+
+  // No record or window expired - create new
+  if (!record || now > record.resetTime) {
+    const resetTime = now + RATE_LIMIT_WINDOW;
+    rateLimitStore.set(key, { count: 1, resetTime });
+    return { allowed: true, remaining: MAX_REQUESTS_PER_WINDOW - 1, resetTime };
+  }
+
+  // Check if limit exceeded
+  if (record.count >= MAX_REQUESTS_PER_WINDOW) {
+    return { allowed: false, remaining: 0, resetTime: record.resetTime };
+  }
+
+  // Increment count
+  record.count += 1;
+  rateLimitStore.set(key, record);
+  return { allowed: true, remaining: MAX_REQUESTS_PER_WINDOW - record.count, resetTime: record.resetTime };
+}
+
+// ============================================
+// TYPE DEFINITIONS
+// ============================================
 interface TranslateRequest {
   text: string;
   targetLanguage: string;
@@ -20,6 +65,33 @@ interface TranslationResult {
 
 export async function POST(request: NextRequest) {
   try {
+    // ============================================
+    // RATE LIMITING CHECK
+    // ============================================
+    const rateLimitKey = getRateLimitKey(request);
+    const rateLimitResult = checkRateLimit(rateLimitKey);
+
+    if (!rateLimitResult.allowed) {
+      const resetDate = new Date(rateLimitResult.resetTime);
+      const minutesUntilReset = Math.ceil((rateLimitResult.resetTime - Date.now()) / 60000);
+      
+      return NextResponse.json(
+        { 
+          error: `Rate limit exceeded. You can make ${MAX_REQUESTS_PER_WINDOW} translations per hour. Try again in ${minutesUntilReset} minutes.`,
+          resetTime: resetDate.toISOString(),
+          remaining: 0
+        },
+        { 
+          status: 429,
+          headers: {
+            'X-RateLimit-Limit': MAX_REQUESTS_PER_WINDOW.toString(),
+            'X-RateLimit-Remaining': '0',
+            'X-RateLimit-Reset': rateLimitResult.resetTime.toString(),
+          }
+        }
+      );
+    }
+
     const body: TranslateRequest = await request.json();
     const { text, targetLanguage, context, vibe, mode, closeness } = body;
 
@@ -84,14 +156,23 @@ export async function POST(request: NextRequest) {
     // Parse the AI response
     const result = parseAIResponse(responseContent, mode);
 
-    return NextResponse.json({
-      success: true,
-      result,
-      originalText: trimmedText,
-      targetLanguage,
-      context,
-      vibe,
-    });
+    return NextResponse.json(
+      {
+        success: true,
+        result,
+        originalText: trimmedText,
+        targetLanguage,
+        context,
+        vibe,
+      },
+      {
+        headers: {
+          'X-RateLimit-Limit': MAX_REQUESTS_PER_WINDOW.toString(),
+          'X-RateLimit-Remaining': rateLimitResult.remaining.toString(),
+          'X-RateLimit-Reset': rateLimitResult.resetTime.toString(),
+        }
+      }
+    );
 
   } catch (error) {
     console.error('Translation error:', error);
