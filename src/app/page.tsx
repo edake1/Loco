@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, useCallback } from 'react';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -39,8 +39,26 @@ import {
   Briefcase,
   Plane,
   Laugh,
+  Moon,
+  Sun,
+  Download,
 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
+import {
+  Sheet,
+  SheetContent,
+  SheetDescription,
+  SheetHeader,
+  SheetTitle,
+  SheetTrigger,
+} from '@/components/ui/sheet';
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+} from '@/components/ui/dialog';
 
 // Types
 interface TranslationResult {
@@ -136,6 +154,212 @@ function ResultSkeleton() {
   );
 }
 
+// Share Card Component
+function ShareCard({
+  originalText,
+  nativeText,
+  language,
+  explanation,
+  onClose,
+}: {
+  originalText: string;
+  nativeText: string;
+  language: string;
+  explanation: string;
+  onClose: () => void;
+}) {
+  const cardRef = useRef<HTMLDivElement>(null);
+  const [isGenerating, setIsGenerating] = useState(false);
+
+  const handleDownload = useCallback(async () => {
+    if (!cardRef.current) return;
+
+    setIsGenerating(true);
+    try {
+      // Create canvas from the card
+      const canvas = document.createElement('canvas');
+      const ctx = canvas.getContext('2d');
+      if (!ctx) throw new Error('Could not get canvas context');
+
+      // Set canvas size
+      canvas.width = 600;
+      canvas.height = 500;
+
+      // Draw gradient background
+      const gradient = ctx.createLinearGradient(0, 0, canvas.width, canvas.height);
+      gradient.addColorStop(0, '#fff7ed');
+      gradient.addColorStop(0.5, '#ffffff');
+      gradient.addColorStop(1, '#fffbeb');
+      ctx.fillStyle = gradient;
+      ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+      // Draw border
+      ctx.strokeStyle = '#fed7aa';
+      ctx.lineWidth = 4;
+      ctx.roundRect(10, 10, canvas.width - 20, canvas.height - 20, 20);
+      ctx.stroke();
+
+      // Draw header
+      ctx.fillStyle = '#ea580c';
+      ctx.font = 'bold 28px system-ui, -apple-system, sans-serif';
+      ctx.fillText('🦁 Loco', 30, 55);
+
+      ctx.fillStyle = '#9ca3af';
+      ctx.font = '14px system-ui, -apple-system, sans-serif';
+      ctx.fillText('Sound like a local', 30, 78);
+
+      // Draw divider
+      ctx.strokeStyle = '#fed7aa';
+      ctx.lineWidth = 1;
+      ctx.beginPath();
+      ctx.moveTo(30, 100);
+      ctx.lineTo(canvas.width - 30, 100);
+      ctx.stroke();
+
+      // Draw original text
+      ctx.fillStyle = '#6b7280';
+      ctx.font = '12px system-ui, -apple-system, sans-serif';
+      ctx.fillText('ORIGINAL', 30, 130);
+
+      ctx.fillStyle = '#1f2937';
+      ctx.font = '16px system-ui, -apple-system, sans-serif';
+      const wrappedOriginal = wrapText(ctx, `"${originalText}"`, 30, 155, canvas.width - 60, 22);
+      wrappedOriginal.forEach((line, i) => {
+        ctx.fillText(line, 30, 155 + i * 22);
+      });
+
+      // Draw arrow
+      ctx.fillStyle = '#ea580c';
+      ctx.font = '24px system-ui, -apple-system, sans-serif';
+      ctx.fillText('↓', canvas.width / 2 - 10, 200 + wrappedOriginal.length * 22 + 10);
+
+      // Draw native text
+      ctx.fillStyle = '#ea580c';
+      ctx.font = '12px system-ui, -apple-system, sans-serif';
+      ctx.fillText(`NATIVE (${language.toUpperCase()})`, 30, 240 + wrappedOriginal.length * 22);
+
+      ctx.fillStyle = '#1f2937';
+      ctx.font = 'bold 26px system-ui, -apple-system, sans-serif';
+      const wrappedNative = wrapText(ctx, nativeText, 30, 275 + wrappedOriginal.length * 22, canvas.width - 60, 34);
+      wrappedNative.forEach((line, i) => {
+        ctx.fillText(line, 30, 275 + wrappedOriginal.length * 22 + i * 34);
+      });
+
+      // Draw explanation
+      ctx.fillStyle = '#6b7280';
+      ctx.font = '14px system-ui, -apple-system, sans-serif';
+      const wrappedExplanation = wrapText(ctx, `💡 ${explanation}`, 30, 355 + wrappedOriginal.length * 22 + wrappedNative.length * 10, canvas.width - 60, 20);
+      wrappedExplanation.forEach((line, i) => {
+        ctx.fillText(line, 30, 355 + wrappedOriginal.length * 22 + wrappedNative.length * 10 + i * 20);
+      });
+
+      // Draw footer
+      ctx.fillStyle = '#9ca3af';
+      ctx.font = '12px system-ui, -apple-system, sans-serif';
+      ctx.fillText('loco.app • Make your texts native', canvas.width - 230, canvas.height - 25);
+
+      // Download
+      const link = document.createElement('a');
+      link.download = 'loco-translation.png';
+      link.href = canvas.toDataURL('image/png');
+      link.click();
+    } catch (err) {
+      console.error('Failed to generate image:', err);
+    } finally {
+      setIsGenerating(false);
+    }
+  }, [originalText, nativeText, language, explanation]);
+
+  // Helper to wrap text
+  function wrapText(ctx: CanvasRenderingContext2D, text: string, x: number, y: number, maxWidth: number, lineHeight: number): string[] {
+    const words = text.split(' ');
+    const lines: string[] = [];
+    let currentLine = '';
+
+    for (const word of words) {
+      const testLine = currentLine + (currentLine ? ' ' : '') + word;
+      const metrics = ctx.measureText(testLine);
+      if (metrics.width > maxWidth && currentLine) {
+        lines.push(currentLine);
+        currentLine = word;
+      } else {
+        currentLine = testLine;
+      }
+    }
+    if (currentLine) lines.push(currentLine);
+    return lines.slice(0, 3); // Max 3 lines
+  }
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm animate-in fade-in duration-200">
+      <div className="bg-white dark:bg-gray-900 rounded-2xl shadow-2xl max-w-md w-full mx-4 overflow-hidden animate-in zoom-in-95 duration-200">
+        <div className="p-6">
+          <div className="flex items-center justify-between mb-4">
+            <h3 className="text-lg font-semibold text-gray-900 dark:text-white">Share Your Translation</h3>
+            <Button variant="ghost" size="icon" onClick={onClose} className="text-gray-400">
+              <X className="w-5 h-5" />
+            </Button>
+          </div>
+
+          {/* Preview Card */}
+          <div
+            ref={cardRef}
+            className="bg-gradient-to-br from-orange-50 via-white to-amber-50 rounded-xl p-5 border-2 border-orange-200 mb-4"
+          >
+            <div className="flex items-center gap-2 mb-3">
+              <span className="text-2xl">🦁</span>
+              <div>
+                <p className="font-bold text-orange-600">Loco</p>
+                <p className="text-xs text-gray-400">Sound like a local</p>
+              </div>
+            </div>
+
+            <div className="space-y-3">
+              <div>
+                <p className="text-xs text-gray-400 uppercase tracking-wide mb-1">Original</p>
+                <p className="text-sm text-gray-700 dark:text-gray-300">&quot;{originalText.slice(0, 60)}{originalText.length > 60 ? '...' : ''}&quot;</p>
+              </div>
+
+              <div className="text-center text-orange-500 text-xl">↓</div>
+
+              <div>
+                <p className="text-xs text-orange-500 uppercase tracking-wide mb-1">Native ({language})</p>
+                <p className="text-xl font-semibold text-gray-900 dark:text-white">{nativeText}</p>
+              </div>
+
+              <p className="text-xs text-gray-500 pt-2 border-t border-orange-100">
+                💡 {explanation.slice(0, 80)}{explanation.length > 80 ? '...' : ''}
+              </p>
+            </div>
+
+            <p className="text-xs text-gray-400 text-center mt-4">
+              loco.app • Make your texts native
+            </p>
+          </div>
+
+          <div className="flex gap-2">
+            <Button
+              onClick={handleDownload}
+              disabled={isGenerating}
+              className="flex-1 bg-gradient-to-r from-orange-500 to-amber-500 text-white"
+            >
+              {isGenerating ? (
+                <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+              ) : (
+                <Download className="w-4 h-4 mr-2" />
+              )}
+              Download Image
+            </Button>
+            <Button variant="outline" onClick={onClose} className="flex-1">
+              Cancel
+            </Button>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 // Error State Component
 function ErrorState({ message, onRetry }: { message: string; onRetry?: () => void }) {
   return (
@@ -179,9 +403,34 @@ export default function Home() {
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [history, setHistory] = useState<HistoryItem[]>([]);
-  const [showHistory, setShowHistory] = useState(false);
   const [copied, setCopied] = useState(false);
   const [showExamples, setShowExamples] = useState(false);
+  const [isDark, setIsDark] = useState(false);
+  const [showShareCard, setShowShareCard] = useState(false);
+
+  // Initialize dark mode from localStorage/system preference
+  useEffect(() => {
+    const savedTheme = localStorage.getItem('loco-theme');
+    const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+
+    if (savedTheme === 'dark' || (!savedTheme && prefersDark)) {
+      setIsDark(true);
+      document.documentElement.classList.add('dark');
+    }
+  }, []);
+
+  // Toggle dark mode
+  const toggleDarkMode = () => {
+    const newIsDark = !isDark;
+    setIsDark(newIsDark);
+    localStorage.setItem('loco-theme', newIsDark ? 'dark' : 'light');
+
+    if (newIsDark) {
+      document.documentElement.classList.add('dark');
+    } else {
+      document.documentElement.classList.remove('dark');
+    }
+  };
 
   // Load history from localStorage
   useEffect(() => {
@@ -287,7 +536,10 @@ export default function Home() {
     if (vibe) setSelectedVibe(vibe);
     if (close) setSelectedCloseness(close);
     setMode(item.mode);
-    setShowHistory(false);
+
+    // Close the history drawer by setting the sheet state
+    const closeButton = document.querySelector('[data-radix-collection-item]') as HTMLButtonElement;
+    if (closeButton) closeButton.click();
 
     toast({
       title: 'Loaded from history',
@@ -394,20 +646,212 @@ export default function Home() {
               </div>
             </div>
 
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={() => setShowHistory(!showHistory)}
-              className="text-gray-600 dark:text-gray-300 hover:bg-orange-100 dark:hover:bg-orange-900/30"
-            >
-              <History className="w-4 h-4 sm:mr-2" />
-              <span className="hidden sm:inline">History</span>
-              {history.length > 0 && (
-                <Badge variant="secondary" className="sm:ml-2 ml-1 text-xs bg-orange-100 text-orange-700 dark:bg-orange-900/50 dark:text-orange-300">
-                  {history.length}
-                </Badge>
-              )}
-            </Button>
+            <div className="flex items-center gap-2">
+              <Button
+                variant="ghost"
+                size="icon"
+                onClick={toggleDarkMode}
+                className="text-gray-600 dark:text-gray-300 hover:bg-orange-100 dark:hover:bg-orange-900/30"
+                title={isDark ? 'Switch to light mode' : 'Switch to dark mode'}
+              >
+                {isDark ? <Sun className="w-4 h-4" /> : <Moon className="w-4 h-4" />}
+              </Button>
+
+              <Sheet>
+                <SheetTrigger asChild>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    className="text-gray-600 dark:text-gray-300 hover:bg-orange-100 dark:hover:bg-orange-900/30"
+                  >
+                    <History className="w-4 h-4 sm:mr-2" />
+                    <span className="hidden sm:inline">History</span>
+                    {history.length > 0 && (
+                      <Badge variant="secondary" className="sm:ml-2 ml-1 text-xs bg-orange-100 text-orange-700 dark:bg-orange-900/50 dark:text-orange-300">
+                        {history.length}
+                      </Badge>
+                    )}
+                  </Button>
+                </SheetTrigger>
+                <SheetContent className="w-[400px] sm:w-[450px] p-0 flex flex-col">
+                  <SheetHeader className="p-4 border-b border-gray-100 dark:border-gray-800">
+                    <div className="flex items-center justify-between">
+                      <SheetTitle className="text-lg">History & Bookmarks</SheetTitle>
+                      {history.length > 0 && (
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={clearHistory}
+                          className="text-red-500 hover:text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20"
+                        >
+                          <Trash2 className="w-4 h-4 mr-1" />
+                          Clear
+                        </Button>
+                      )}
+                    </div>
+                  </SheetHeader>
+                  <div className="flex-1 overflow-hidden">
+                    <Tabs defaultValue="all" className="h-full flex flex-col">
+                      <div className="px-4 pt-4">
+                        <TabsList className="grid w-full grid-cols-2 bg-gray-100 dark:bg-gray-800">
+                          <TabsTrigger value="all" className="data-[state=active]:bg-white dark:data-[state=active]:bg-gray-900">
+                            All ({history.length})
+                          </TabsTrigger>
+                          <TabsTrigger value="bookmarks" className="data-[state=active]:bg-white dark:data-[state=active]:bg-gray-900">
+                            <Bookmark className="w-3 h-3 mr-1" />
+                            Saved ({bookmarkedItems.length})
+                          </TabsTrigger>
+                        </TabsList>
+                      </div>
+
+                      <TabsContent value="all" className="flex-1 overflow-hidden mt-0">
+                        <ScrollArea className="h-[calc(100vh-200px)]">
+                          <div className="p-4 pt-2">
+                            {history.length === 0 ? (
+                              <div className="text-center py-8 text-gray-500 dark:text-gray-400">
+                                <History className="w-10 h-10 mx-auto mb-3 opacity-30" />
+                                <p className="font-medium">No history yet</p>
+                                <p className="text-sm mt-1">Your transformations will appear here</p>
+                              </div>
+                            ) : (
+                              <div className="space-y-2">
+                                {history.map((item) => (
+                                  <div
+                                    key={item.id}
+                                    className="bg-gray-50 dark:bg-gray-800/50 rounded-xl p-3 border border-gray-100 dark:border-gray-700/50 hover:border-orange-200 dark:hover:border-orange-800/50 transition-colors"
+                                  >
+                                    <div className="flex items-start justify-between gap-2">
+                                      <div className="flex-1 min-w-0">
+                                        <div className="flex items-center gap-2 mb-1.5 flex-wrap">
+                                          <Badge variant="outline" className="text-xs">
+                                            {item.mode === 'send' ? '📤' : '📥'}
+                                          </Badge>
+                                          <Badge variant="secondary" className="text-xs bg-orange-100 text-orange-700 dark:bg-orange-900/30 dark:text-orange-300">
+                                            {item.targetLanguage}
+                                          </Badge>
+                                          <span className="text-xs text-gray-400">
+                                            {new Date(item.timestamp).toLocaleDateString()}
+                                          </span>
+                                        </div>
+                                        <p className="text-sm text-gray-600 dark:text-gray-300 line-clamp-1">
+                                          {item.originalText}
+                                        </p>
+                                        {item.result.nativeText && (
+                                          <p className="text-sm font-medium text-orange-600 dark:text-orange-400 mt-1 line-clamp-1">
+                                            → {item.result.nativeText}
+                                          </p>
+                                        )}
+                                      </div>
+                                      <div className="flex gap-0.5 flex-shrink-0">
+                                        <Button
+                                          variant="ghost"
+                                          size="icon"
+                                          onClick={() => handleReRun(item)}
+                                          className="h-8 w-8 text-gray-400 hover:text-orange-500"
+                                          title="Re-run"
+                                        >
+                                          <RotateCcw className="w-3.5 h-3.5" />
+                                        </Button>
+                                        <Button
+                                          variant="ghost"
+                                          size="icon"
+                                          onClick={() => toggleBookmark(item.id)}
+                                          className={`h-8 w-8 ${
+                                            item.isBookmarked
+                                              ? 'text-orange-500'
+                                              : 'text-gray-400 hover:text-orange-500'
+                                          }`}
+                                        >
+                                          {item.isBookmarked ? (
+                                            <BookmarkCheck className="w-3.5 h-3.5" />
+                                          ) : (
+                                            <Bookmark className="w-3.5 h-3.5" />
+                                          )}
+                                        </Button>
+                                        <Button
+                                          variant="ghost"
+                                          size="icon"
+                                          onClick={() => deleteHistoryItem(item.id)}
+                                          className="h-8 w-8 text-gray-400 hover:text-red-500"
+                                        >
+                                          <Trash2 className="w-3.5 h-3.5" />
+                                        </Button>
+                                      </div>
+                                    </div>
+                                  </div>
+                                ))}
+                              </div>
+                            )}
+                          </div>
+                        </ScrollArea>
+                      </TabsContent>
+
+                      <TabsContent value="bookmarks" className="flex-1 overflow-hidden mt-0">
+                        <ScrollArea className="h-[calc(100vh-200px)]">
+                          <div className="p-4 pt-2">
+                            {bookmarkedItems.length === 0 ? (
+                              <div className="text-center py-8 text-gray-500 dark:text-gray-400">
+                                <Bookmark className="w-10 h-10 mx-auto mb-3 opacity-30" />
+                                <p className="font-medium">No saved items</p>
+                                <p className="text-sm mt-1">Bookmark your favorites to find them easily</p>
+                              </div>
+                            ) : (
+                              <div className="space-y-2">
+                                {bookmarkedItems.map((item) => (
+                                  <div
+                                    key={item.id}
+                                    className="bg-orange-50/70 dark:bg-orange-900/10 rounded-xl p-3 border border-orange-200/50 dark:border-orange-800/30"
+                                  >
+                                    <div className="flex items-start justify-between gap-2">
+                                      <div className="flex-1 min-w-0">
+                                        <div className="flex items-center gap-2 mb-1.5">
+                                          <Badge variant="outline" className="text-xs">
+                                            {item.mode === 'send' ? '📤' : '📥'}
+                                          </Badge>
+                                          <Badge variant="secondary" className="text-xs">
+                                            {item.targetLanguage}
+                                          </Badge>
+                                        </div>
+                                        <p className="text-sm text-gray-600 dark:text-gray-300 line-clamp-1">
+                                          {item.originalText}
+                                        </p>
+                                        {item.result.nativeText && (
+                                          <p className="text-sm font-medium text-orange-600 dark:text-orange-400 mt-1 line-clamp-1">
+                                            → {item.result.nativeText}
+                                          </p>
+                                        )}
+                                      </div>
+                                      <div className="flex gap-0.5">
+                                        <Button
+                                          variant="ghost"
+                                          size="icon"
+                                          onClick={() => handleCopy(item.result.nativeText)}
+                                          className="h-8 w-8 text-gray-400 hover:text-orange-500"
+                                        >
+                                          <Copy className="w-3.5 h-3.5" />
+                                        </Button>
+                                        <Button
+                                          variant="ghost"
+                                          size="icon"
+                                          onClick={() => toggleBookmark(item.id)}
+                                          className="h-8 w-8 text-orange-500"
+                                        >
+                                          <BookmarkCheck className="w-3.5 h-3.5" />
+                                        </Button>
+                                      </div>
+                                    </div>
+                                  </div>
+                                ))}
+                              </div>
+                            )}
+                          </div>
+                        </ScrollArea>
+                      </TabsContent>
+                    </Tabs>
+                  </div>
+                </SheetContent>
+              </Sheet>
+            </div>
           </div>
         </div>
       </header>
@@ -682,8 +1126,18 @@ export default function Home() {
                     <Button
                       variant="ghost"
                       size="sm"
+                      onClick={() => setShowShareCard(true)}
+                      className="text-orange-600 dark:text-orange-400"
+                      title="Generate share card"
+                    >
+                      <Download className="w-4 h-4" />
+                    </Button>
+                    <Button
+                      variant="ghost"
+                      size="sm"
                       onClick={handleShare}
                       className="text-orange-600 dark:text-orange-400"
+                      title="Share"
                     >
                       <Share2 className="w-4 h-4" />
                     </Button>
@@ -756,182 +1210,18 @@ export default function Home() {
             </Card>
           </div>
         )}
-
-        {/* History Panel */}
-        {showHistory && (
-          <Card className="border-0 shadow-xl bg-white/90 dark:bg-gray-900/90 backdrop-blur-sm animate-in slide-in-from-bottom-4 duration-300">
-            <CardHeader className="pb-2 pt-4 px-4">
-              <div className="flex items-center justify-between">
-                <CardTitle className="text-lg">History & Bookmarks</CardTitle>
-                {history.length > 0 && (
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    onClick={clearHistory}
-                    className="text-red-500 hover:text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20"
-                  >
-                    <Trash2 className="w-4 h-4 mr-1" />
-                    Clear
-                  </Button>
-                )}
-              </div>
-            </CardHeader>
-            <CardContent className="px-4 pb-4">
-              <Tabs defaultValue="all">
-                <TabsList className="grid w-full grid-cols-2 mb-4 bg-gray-100 dark:bg-gray-800">
-                  <TabsTrigger value="all" className="data-[state=active]:bg-white dark:data-[state=active]:bg-gray-900">
-                    All ({history.length})
-                  </TabsTrigger>
-                  <TabsTrigger value="bookmarks" className="data-[state=active]:bg-white dark:data-[state=active]:bg-gray-900">
-                    <Bookmark className="w-3 h-3 mr-1" />
-                    Saved ({bookmarkedItems.length})
-                  </TabsTrigger>
-                </TabsList>
-
-                <TabsContent value="all">
-                  <ScrollArea className="h-[350px] sm:h-[400px]">
-                    {history.length === 0 ? (
-                      <div className="text-center py-8 text-gray-500 dark:text-gray-400">
-                        <History className="w-10 h-10 mx-auto mb-3 opacity-30" />
-                        <p className="font-medium">No history yet</p>
-                        <p className="text-sm mt-1">Your transformations will appear here</p>
-                      </div>
-                    ) : (
-                      <div className="space-y-2">
-                        {history.map((item) => (
-                          <div
-                            key={item.id}
-                            className="bg-gray-50 dark:bg-gray-800/50 rounded-xl p-3 border border-gray-100 dark:border-gray-700/50 hover:border-orange-200 dark:hover:border-orange-800/50 transition-colors"
-                          >
-                            <div className="flex items-start justify-between gap-2">
-                              <div className="flex-1 min-w-0">
-                                <div className="flex items-center gap-2 mb-1.5 flex-wrap">
-                                  <Badge variant="outline" className="text-xs">
-                                    {item.mode === 'send' ? '📤' : '📥'}
-                                  </Badge>
-                                  <Badge variant="secondary" className="text-xs bg-orange-100 text-orange-700 dark:bg-orange-900/30 dark:text-orange-300">
-                                    {item.targetLanguage}
-                                  </Badge>
-                                  <span className="text-xs text-gray-400">
-                                    {new Date(item.timestamp).toLocaleDateString()}
-                                  </span>
-                                </div>
-                                <p className="text-sm text-gray-600 dark:text-gray-300 line-clamp-1">
-                                  {item.originalText}
-                                </p>
-                                {item.result.nativeText && (
-                                  <p className="text-sm font-medium text-orange-600 dark:text-orange-400 mt-1 line-clamp-1">
-                                    → {item.result.nativeText}
-                                  </p>
-                                )}
-                              </div>
-                              <div className="flex gap-0.5 flex-shrink-0">
-                                <Button
-                                  variant="ghost"
-                                  size="icon"
-                                  onClick={() => handleReRun(item)}
-                                  className="h-8 w-8 text-gray-400 hover:text-orange-500"
-                                  title="Re-run"
-                                >
-                                  <RotateCcw className="w-3.5 h-3.5" />
-                                </Button>
-                                <Button
-                                  variant="ghost"
-                                  size="icon"
-                                  onClick={() => toggleBookmark(item.id)}
-                                  className={`h-8 w-8 ${
-                                    item.isBookmarked
-                                      ? 'text-orange-500'
-                                      : 'text-gray-400 hover:text-orange-500'
-                                  }`}
-                                >
-                                  {item.isBookmarked ? (
-                                    <BookmarkCheck className="w-3.5 h-3.5" />
-                                  ) : (
-                                    <Bookmark className="w-3.5 h-3.5" />
-                                  )}
-                                </Button>
-                                <Button
-                                  variant="ghost"
-                                  size="icon"
-                                  onClick={() => deleteHistoryItem(item.id)}
-                                  className="h-8 w-8 text-gray-400 hover:text-red-500"
-                                >
-                                  <Trash2 className="w-3.5 h-3.5" />
-                                </Button>
-                              </div>
-                            </div>
-                          </div>
-                        ))}
-                      </div>
-                    )}
-                  </ScrollArea>
-                </TabsContent>
-
-                <TabsContent value="bookmarks">
-                  <ScrollArea className="h-[350px] sm:h-[400px]">
-                    {bookmarkedItems.length === 0 ? (
-                      <div className="text-center py-8 text-gray-500 dark:text-gray-400">
-                        <Bookmark className="w-10 h-10 mx-auto mb-3 opacity-30" />
-                        <p className="font-medium">No saved items</p>
-                        <p className="text-sm mt-1">Bookmark your favorites to find them easily</p>
-                      </div>
-                    ) : (
-                      <div className="space-y-2">
-                        {bookmarkedItems.map((item) => (
-                          <div
-                            key={item.id}
-                            className="bg-orange-50/70 dark:bg-orange-900/10 rounded-xl p-3 border border-orange-200/50 dark:border-orange-800/30"
-                          >
-                            <div className="flex items-start justify-between gap-2">
-                              <div className="flex-1 min-w-0">
-                                <div className="flex items-center gap-2 mb-1.5">
-                                  <Badge variant="outline" className="text-xs">
-                                    {item.mode === 'send' ? '📤' : '📥'}
-                                  </Badge>
-                                  <Badge variant="secondary" className="text-xs">
-                                    {item.targetLanguage}
-                                  </Badge>
-                                </div>
-                                <p className="text-sm text-gray-600 dark:text-gray-300 line-clamp-1">
-                                  {item.originalText}
-                                </p>
-                                {item.result.nativeText && (
-                                  <p className="text-sm font-medium text-orange-600 dark:text-orange-400 mt-1 line-clamp-1">
-                                    → {item.result.nativeText}
-                                  </p>
-                                )}
-                              </div>
-                              <div className="flex gap-0.5">
-                                <Button
-                                  variant="ghost"
-                                  size="icon"
-                                  onClick={() => handleCopy(item.result.nativeText)}
-                                  className="h-8 w-8 text-gray-400 hover:text-orange-500"
-                                >
-                                  <Copy className="w-3.5 h-3.5" />
-                                </Button>
-                                <Button
-                                  variant="ghost"
-                                  size="icon"
-                                  onClick={() => toggleBookmark(item.id)}
-                                  className="h-8 w-8 text-orange-500"
-                                >
-                                  <BookmarkCheck className="w-3.5 h-3.5" />
-                                </Button>
-                              </div>
-                            </div>
-                          </div>
-                        ))}
-                      </div>
-                    )}
-                  </ScrollArea>
-                </TabsContent>
-              </Tabs>
-            </CardContent>
-          </Card>
-        )}
       </main>
+
+      {/* Share Card Modal */}
+      {showShareCard && result && (
+        <ShareCard
+          originalText={inputText}
+          nativeText={result.nativeText}
+          language={selectedLanguage.name}
+          explanation={result.explanation}
+          onClose={() => setShowShareCard(false)}
+        />
+      )}
 
       {/* Footer */}
       <footer className="max-w-4xl mx-auto px-4 py-8 text-center">
